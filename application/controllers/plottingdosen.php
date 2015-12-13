@@ -76,23 +76,32 @@ class Plottingdosen extends CI_Controller {
 			$roomID = $this->input->post('roomsName');
 			$days = $this->input->post('days');
 			$time = $this->input->post('time');
-			$this->kelas_model->insertNewClass($courseID, $lecturerID, "2015", $days, $roomID, $time);
+			$newClass = $this->kelas_model->insertNewClass($courseID, $lecturerID, $data['semester'], $days, $roomID, $time);
+			$thisClass = $this->kelas_model->getCurrentClass($major, $newClass);
+			$this->notifikasi_model->sendNotification($this->session->userdata('username'), $thisClass->idDosen, "Anda diminta untuk mengajar ".$thisClass->namaMataKuliah." Kelas ".$thisClass->namaKelas);			
 		}
 
 		foreach ($classes as $class){
 			if($this->input->post($class['id'])){
 				//if($this->input->post('btnOk')){
+					$studentList = $this->kelas_model->getStudents($class['id']);
+					$thisClass = $this->kelas_model->getCurrentClass($major, $class['id']);
+					$this->notifikasi_model->sendNotification($this->session->userdata('username'), $thisClass->idDosen, $thisClass->namaMataKuliah." Kelas ".$thisClass->namaKelas." ditutup.");
+					foreach($studentList as $student){
+						$this->notifikasi_model->sendNotification($this->session->userdata('username'), $student['mahasiswa_nrp'], $thisClass->namaMataKuliah." Kelas ".$thisClass->namaKelas." ditutup.");
+					}
+
 					$this->kelas_model->updateClassStatus($class['id']);
 				//}
 			}
 			$this->kelas_model->countStudents($class['id']);
 		}
 
-		/*foreach ($classes as $class){
+		foreach ($classes as $class){
 			if($class['kelas_id'] != NULL){
 				$this->kelas_model->updateCountStudents($class['id'], $class['kelas_id']);
 			}
-		}*/
+		}
 
 		$order = "ASC";
 
@@ -215,19 +224,30 @@ class Plottingdosen extends CI_Controller {
 			$mainClassID = $this->input->post('mainClassID');
 			$mainClassName = $this->input->post('mainClassName');
 
+			$thisClass = $this->kelas_model->getCurrentClass($major, $mainClassID);
+
 			foreach ($classes as $class){
 				if($class['id'] != $mainClassID){
 					if($this->input->post($class['id'])){
-						$this->kelas_model->updateGabungKelas($mainClassID, $mainClassName, $class['id']);
+						$oldClass = $this->kelas_model->getCurrentClass($major, $class['id']);
+						$studentList = $this->kelas_model->getStudents($class['id']);
+						$this->notifikasi_model->sendNotification($this->session->userdata('username'), $thisClass->idDosen, $oldClass->namaMataKuliah." Kelas ".$oldClass->namaKelas." digabung dengan Kelas ".$thisClass->namaKelas);
+						$this->notifikasi_model->sendNotification($this->session->userdata('username'), $oldClass->idDosen, $oldClass->namaMataKuliah." Kelas ".$oldClass->namaKelas." digabung dengan Kelas ".$thisClass->namaKelas);
+						foreach($studentList as $student){
+							//echo $student['mahasiswa_nrp'];
+							//$this->kelas_model->updateGabungMurid($mainClassID, $student['mahasiswa_nrp']);
+							$this->notifikasi_model->sendNotification($this->session->userdata('username'), $student['mahasiswa_nrp'], $oldClass->namaMataKuliah." Kelas ".$oldClass->namaKelas." digabung dengan Kelas ".$thisClass->namaKelas);
+						}
+						//$this->kelas_model->updateGabungKelas($mainClassID, $mainClassName, $class['id']);
 					}
 				}
 			}
 
-			/*foreach ($classes as $class){
+			foreach ($classes as $class){
 				if($class['kelas_id'] != NULL){
 					$this->kelas_model->updateCountStudents($class['id'], $class['kelas_id']);
 				}
-			}*/
+			}
 
 			$data['classes'] = $this->kelas_model->getClassForOpenClass($major);
 
