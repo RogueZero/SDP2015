@@ -92,15 +92,12 @@
             "; echo form_dropdown('days', $days); echo "
             </td>
             <td align='center'>
-              "; echo form_dropdown('time', $time); echo "
-            </td>
-            <td align='center'>
-              "; echo form_submit('SplitClass', 'Pisah');
-              echo form_submit('cancel', 'Cancel');
-            echo "</td>"
+              "; echo form_dropdown('time', $time);
             ?>
           </tr>
         </table>
+        <?php  echo form_submit('SplitClass', 'Pisah');
+              echo form_submit('cancel', 'Cancel'); ?>
         </div>
         </center>
         <br><hr class="endHeaderTable"></hr><br>
